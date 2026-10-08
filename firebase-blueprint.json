@@ -1,0 +1,267 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "App user profile with role-based access control and assigned restaurants",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth user ID"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "User email address"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Full name or role name"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["superadmin", "restaurant_admin", "chef", "cook", "buyer"],
+          "description": "Assigned user role"
+        },
+        "assignedRestaurants": {
+          "type": "array",
+          "description": "List of restaurant IDs accessible to the user"
+        },
+        "active": {
+          "type": "boolean",
+          "description": "Account active status"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Account creation timestamp"
+        }
+      },
+      "required": ["uid", "email", "role", "active"]
+    },
+    "Restaurant": {
+      "title": "Restaurant",
+      "description": "Restaurant metadata and settings",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique restaurant identifier (e.g. armenia, minsk)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable restaurant name"
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency symbol (e.g. ฿)"
+        },
+        "city": {
+          "type": "string",
+          "description": "Location city"
+        },
+        "active": {
+          "type": "boolean",
+          "description": "Whether the restaurant is currently active"
+        },
+        "timezone": {
+          "type": "string",
+          "description": "Timezone for deadline calculations"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp"
+        }
+      },
+      "required": ["id", "name", "currency", "active"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Procurement order placed for a restaurant",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Order identifier"
+        },
+        "orderNumber": {
+          "type": "string",
+          "description": "Human-readable order sequence number (e.g. М190926/01)"
+        },
+        "restaurantId": {
+          "type": "string",
+          "description": "Associated restaurant ID"
+        },
+        "restaurantName": {
+          "type": "string",
+          "description": "Restaurant display name"
+        },
+        "customerName": {
+          "type": "string",
+          "description": "Author of the order"
+        },
+        "createdByUid": {
+          "type": "string",
+          "description": "UID of the user who submitted the order"
+        },
+        "date": {
+          "type": "string",
+          "description": "Date of order in DD.MM.YYYY format"
+        },
+        "time": {
+          "type": "string",
+          "description": "Time of order in HH:mm format"
+        },
+        "timestamp": {
+          "type": "number",
+          "description": "Order creation epoch timestamp in milliseconds"
+        },
+        "editDeadlineTimestamp": {
+          "type": "number",
+          "description": "07:00 AM deadline timestamp after which edits are locked"
+        },
+        "isEdited": {
+          "type": "boolean",
+          "description": "Whether the order has been modified after initial submission"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Last edit timestamp display string"
+        },
+        "version": {
+          "type": "number",
+          "description": "Optimistic concurrency lock version"
+        },
+        "totalPositions": {
+          "type": "number",
+          "description": "Total count of distinct line items"
+        },
+        "totalSum": {
+          "type": "number",
+          "description": "Grand total sum in local currency"
+        },
+        "fulfillmentStatus": {
+          "type": "string",
+          "enum": ["created", "in_progress", "completed"],
+          "description": "Market fulfillment status"
+        },
+        "items": {
+          "type": "array",
+          "description": "Ordered line items"
+        },
+        "messageText": {
+          "type": "string",
+          "description": "Formatted message string for Telegram"
+        }
+      },
+      "required": ["orderNumber", "restaurantId", "date", "time", "timestamp", "editDeadlineTimestamp", "items"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Catalog item with department and pricing for a restaurant",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Product ID"
+        },
+        "name": {
+          "type": "string",
+          "description": "Item name"
+        },
+        "icon": {
+          "type": "string",
+          "description": "Item icon emoji"
+        },
+        "department": {
+          "type": "string",
+          "description": "Market department number"
+        },
+        "defaultUnit": {
+          "type": "string",
+          "description": "Default measurement unit (kg, pcs, pack, etc.)"
+        },
+        "price": {
+          "type": "number",
+          "description": "Current reference price per unit"
+        },
+        "category": {
+          "type": "string",
+          "description": "Product category"
+        },
+        "order": {
+          "type": "number",
+          "description": "Display order"
+        },
+        "updatedAt": {
+          "type": "number",
+          "description": "Last modified timestamp"
+        }
+      },
+      "required": ["id", "name", "department", "defaultUnit"]
+    },
+    "Recipe": {
+      "title": "Recipe",
+      "description": "Kitchen technical recipe card for dishes and prep items",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Recipe ID"
+        },
+        "restaurantId": {
+          "type": "string",
+          "description": "Restaurant ID"
+        },
+        "name": {
+          "type": "string",
+          "description": "Dish or prep item name"
+        },
+        "category": {
+          "type": "string",
+          "description": "Menu section category"
+        },
+        "portionYield": {
+          "type": "string",
+          "description": "Portion yield (e.g. 300g, 1 portion)"
+        },
+        "ingredients": {
+          "type": "array",
+          "description": "List of recipe ingredients with brutto/netto"
+        },
+        "instructions": {
+          "type": "string",
+          "description": "Cooking technique and preparation steps"
+        },
+        "updatedAt": {
+          "type": "number",
+          "description": "Last modified timestamp"
+        }
+      },
+      "required": ["id", "restaurantId", "name", "ingredients"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles with roles and restaurant assignments"
+    },
+    "/restaurants/{restaurantId}": {
+      "schema": "Restaurant",
+      "description": "Restaurant directory and configuration"
+    },
+    "/restaurants/{restaurantId}/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Orders placed for a specific restaurant"
+    },
+    "/restaurants/{restaurantId}/products/{productId}": {
+      "schema": "Product",
+      "description": "Product catalog specific to a restaurant"
+    },
+    "/restaurants/{restaurantId}/recipes/{recipeId}": {
+      "schema": "Recipe",
+      "description": "Recipe cards specific to a restaurant"
+    }
+  }
+}

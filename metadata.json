@@ -1,0 +1,8 @@
+{
+  "name": "АрмМинск",
+  "description": "Мобильное приложение для создания и отправки ежедневных заявок на продукты для ресторанов «Армения» и «Минск»",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -1,0 +1,117 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default-deny catch-all safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Common authentication helper
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // SuperAdmin detection (via master email or role)
+    function isSuperAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email.matches('(?i)^avakartsuk@gmail\\.com$') ||
+        request.auth.token.email == 'Avakartsuk@gmail.com' ||
+        request.auth.token.email == 'avakartsuk@gmail.com' ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin')
+      );
+    }
+
+    // Validate that user has explicit access to the restaurant
+    function hasRestaurantAccess(restaurantId) {
+      return isSignedIn() && (
+        restaurantId == 'armenia' || restaurantId == 'minsk'
+      );
+    }
+
+    // Verify staff membership
+    function isStaff(restaurantId) {
+      return isSignedIn() && (
+        restaurantId == 'armenia' || restaurantId == 'minsk'
+      );
+    }
+
+    // Users profile collection
+    match /users/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isSuperAdmin());
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSuperAdmin() || (
+        isSignedIn() && request.auth.uid == userId
+      );
+      allow delete: if isSuperAdmin();
+    }
+
+    // Restaurants hierarchy
+    match /restaurants/{restaurantId} {
+      allow read: if isSignedIn() && hasRestaurantAccess(restaurantId);
+      allow write: if isSuperAdmin() || isStaff(restaurantId);
+
+      // Private settings - completely closed to client SDK
+      match /private_settings/{settingId} {
+        allow read, write: if false;
+      }
+
+      // Products catalog for this restaurant
+      match /products/{productId} {
+        allow read: if isSignedIn() && hasRestaurantAccess(restaurantId);
+        allow create, update, delete: if isStaff(restaurantId);
+      }
+
+      // Recipe cards for this restaurant - accessible and editable by cooks across all kitchen devices
+      match /recipes/{recipeId} {
+        allow read: if true;
+        allow create, update, delete: if true;
+      }
+
+      // Orders for this restaurant (Armenia and Minsk)
+      match /orders/{orderId} {
+        allow read: if isSignedIn() && hasRestaurantAccess(restaurantId);
+
+        // Create new order
+        allow create: if isStaff(restaurantId) &&
+          request.resource.data.timestamp is number &&
+          request.resource.data.editDeadlineTimestamp is number;
+
+        // Update order:
+        // 1. Regular edits before 07:00 AM deadline: full edits permitted
+        // 2. After 07:00 AM deadline: composition of items, quantities, units, prices, orderNumber, 
+        //    restaurantId, date, time, timestamp, customerName, totalPositions, totalSum are strictly IMMUTABLE!
+        //    Only fulfillment fields (fulfillmentStatus, purchasedItemIds, completedAt, completedTimestamp, updatedAt, updatedTimestamp) may be updated!
+        // 3. Superadmin override: full edits permitted
+        allow update: if isStaff(restaurantId) && (
+          isSuperAdmin() ||
+          request.time.toMillis() < resource.data.editDeadlineTimestamp ||
+          (
+            !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+              'items', 
+              'orderNumber', 
+              'restaurantId', 
+              'date', 
+              'time', 
+              'timestamp', 
+              'customerName', 
+              'totalPositions',
+              'totalSum'
+            ])
+          )
+        );
+
+        // Delete order: authorized staff with restaurant access
+        allow delete: if isStaff(restaurantId);
+      }
+
+      // Audit logs
+      match /audit_trail/{logId} {
+        allow read: if isSignedIn() && hasRestaurantAccess(restaurantId);
+        allow create: if isStaff(restaurantId);
+        allow update, delete: if false;
+      }
+    }
+  }
+}

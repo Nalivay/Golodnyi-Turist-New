@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#FAF7EE" />
+    <title>Голодный Турист — Заказы продуктов и техкарты</title>
+    <meta name="description" content="Ресторан «Голодный Турист» — электронный бланк заказов продуктов и технологические карты блюд" />
+    <meta property="og:title" content="Голодный Турист — Заказы продуктов и техкарты" />
+    <meta property="og:description" content="Ресторан «Голодный Турист» — электронный бланк заказов продуктов и технологические карты блюд" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/Logo_Golodnyy_Turist.png" />
+
+    <!-- Web App Manifest for Android / Chrome PWA -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Favicon and App Icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/Logo_Golodnyy_Turist.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
+    <link rel="icon" type="image/png" href="/Logo_Golodnyy_Turist.png" />
+    
+    <!-- iOS Home Screen Icons and Web App Metas -->
+    <link rel="apple-touch-icon" href="/Logo_Golodnyy_Turist.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/Logo_Golodnyy_Turist.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Голодный Турист" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="Голодный Турист" />
+    <script>
+      // Fix environment issue: "Cannot set property fetch of #<Window> which has only a getter"
+      (function() {
+        try {
+          var originalFetch = typeof window !== 'undefined' && window.fetch ? window.fetch.bind(window) : undefined;
+          var currentFetch = originalFetch;
+          Object.defineProperty(window, 'fetch', {
+            get: function() {
+              return currentFetch;
+            },
+            set: function(val) {
+              currentFetch = typeof val === 'function' ? val : originalFetch;
+            },
+            configurable: true,
+            enumerable: true
+          });
+        } catch (e) {
+          // Ignore if environment prevents redefinition
+        }
+      })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  </head>
+  <body class="bg-[#FAF7EE] text-stone-900 antialiased selection:bg-amber-200">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('/sw.js?v=10', { scope: '/' })
+            .then(function(reg) {
+              reg.update();
+              // Check for updates whenever the user switches back to the app on iOS/Android
+              document.addEventListener('visibilitychange', function() {
+                if (document.visibilityState === 'visible') {
+                  reg.update();
+                }
+              });
+              window.addEventListener('focus', function() {
+                reg.update();
+              });
+              reg.addEventListener('updatefound', function() {
+                var newWorker = reg.installing;
+                if (newWorker) {
+                  newWorker.addEventListener('statechange', function() {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                      console.log('New service worker installed, activating...');
+                      window.location.reload();
+                    }
+                  });
+                }
+              });
+            })
+            .catch(function(err) {
+              console.warn('PWA ServiceWorker registration failed:', err);
+            });
+        });
+      }
+    </script>
+  </body>
+</html>
+
